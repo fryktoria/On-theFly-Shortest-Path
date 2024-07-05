@@ -316,6 +316,8 @@
 
 <p><img src="dlg_configuration_fiber_loss.png" alt="Configuration dialog screenshot - Fiber Loss Budget" /></p>
 
+<h4> Group: General</h4>
+
 <p><code class="language-plaintext highlighter-rouge">Connector loss</code>: Set the average loss of the fiber optic connectors in use. Unit:<code class="language-plaintext highlighter-rouge">db</code>.</p>
 
 <p><code class="language-plaintext highlighter-rouge">Connectors at entry</code>: Set the number of connectors expected at the start point of the analysis. As an example, this can include the connector at the Optical Line Terminal (OLT), the connectors at the Optical Distribution Frames (ODF) etc.</p>
@@ -328,9 +330,30 @@
 
 <p><code class="language-plaintext highlighter-rouge">Fiber attenuation</code>: Set the average attenuation of the fiber optic cables used in the network. Unit:<code class="language-plaintext highlighter-rouge">db</code>.</p>
 
-<p><code class="language-plaintext highlighter-rouge">Fixed loss</code>: This is a fixed value that is added to the loss calculations. It accounts for loss created by certain components, such as optical splitters in an FTTH network. Please note that this value is allocated only to the on-graph cost and not to the entry or exit cost.</p>
+<p><code class="language-plaintext highlighter-rouge">Fixed loss</code>: This is a fixed value that is added to the loss calculations. Please note that this value is allocated only to the on-graph cost and not to the entry or exit cost.</p>
+
+<h4> Group: PON elements</h4>
+<p>The plugin data model allows the calculation of losses from Passive Optical network (PON) elements. Three levels of splitters are supported. The loss for each level can be defined in configuration parameters <code class="language-plaintext highlighter-rouge">Splitters Level 1 loss</code>, <code class="language-plaintext highlighter-rouge">Splitters Level 2 loss</code> and <code class="language-plaintext highlighter-rouge">Splitters Level 3 loss</code>. Unit:<code class="language-plaintext highlighter-rouge">db</code>.</p>
+
+<p>For each splitter level, the number of connectors entering and exiting the splitter can also be defined in configuration parameters <code class="language-plaintext highlighter-rouge">Level 1 connectors</code>, <code class="language-plaintext highlighter-rouge">Level 2 connectors</code> and <code class="language-plaintext highlighter-rouge">Level 3 connectors</code>.</p>
+
+<p><code class="language-plaintext highlighter-rouge">Splice boxes</code>: Sets the number of boxes where a splice is enclosed. Since the calculations utilize the parameter <code class="language-plaintext highlighter-rouge">Splice loss</code> both for the splice boxes and the splices accounted with the installation frequency defined in parameter <code class="language-plaintext highlighter-rouge">Splice every</code>, the user may implement custom scenarios to accomodate splice losses, either with the frequency, or the number of splices or both.</p>
+
+<h4> Group: Profiles</h4>
+<p>To help users who work with multiple PON projects or multiple PON components that would require modification of several parameters, the plugin offers the functionality of creating and using multiple loss profiles. Each loss profile has a name which appears in the list. The user can manipulate the list with the <code class="language-plaintext highlighter-rouge">Load</code>, <code class="language-plaintext highlighter-rouge">Save</code> and <code class="language-plaintext highlighter-rouge">Delete</code> buttons. There is at least one profile called "basic" whose values can be modified but the profile itself cannot be deleted or renamed.</p>
+
+<h5>Create a new profile</h5>
+<p>Set the parameters of the tab to your desired values. Write a distinguishing name for the new profile into the text entry box. This name must be different than the existing profile names, otherwise the profile with the same name will be updated with the current values. Press the <code class="language-plaintext highlighter-rouge">Save</code> button.</p>
+
+<h5>Load an existing profile</h5>
+<p>Select the profile from the profile list. Press the <code class="language-plaintext highlighter-rouge">Load</code> button. The values of the parameters will be overwritten with the values of the stored profile.</p>
 
 
+<h5>Update an existing profile</h5>
+<p>First load the profile, making sure that the name of the profile appears in the text entry box. Modify the values of the parameters. Press the <code class="language-plaintext highlighter-rouge">Save</code> button.</p>
+
+<h5>Delete an existing profile</h5>
+<p>Select the profile from the profile list. Press the <code class="language-plaintext highlighter-rouge">Delete</code> button.</p>
 
 
 <h3 id="section-fiber-loss-budget">Section: Limits</h3>
@@ -554,6 +577,18 @@
   <li>
     <p>The <code class="language-plaintext highlighter-rouge">Fixed loss</code> parameter, only if the checkbox <code class="language-plaintext highlighter-rouge">Add Fixed loss amount</code><img src="./icons/add-fixed.svg" alt="Add fixed button" width="20" height="20" /> of the plugin panel is checked</p>
   </li>
+  <li>
+    <p>The loss associated with the GPON elements installed along the line, which is calculated as the sum of:</p>
+       <ol>
+
+    <li>the losses of splitters of all three levels </li>
+    <li>the number of splitter connectors of all three levels multipled by <code class="language-plaintext highlighter-rouge">Connector loss</code> parameter</li>
+    <li>the number of splice boxes multipled by <code class="language-plaintext highlighter-rouge">Splice loss</code> parameter</li>
+    
+       </ol>
+  
+  
+  
 </ol>
 
 <p>NOTE: When the <code class="language-plaintext highlighter-rouge">Include entry/exit lengths</code> of the configuration dialog is checked, the total loss from Start marker, along the line and to the End marker appears in the panel. When unchecked, only the loss along the line (attenuation and splice loss) plus the Fixed loss appears in the panel. In the unchecked case, connector losses and fiber attenuation due to the distance of the Start and End markers from the line, is not included in the result value presented in the panel. Yet, the individual losses for all three parts (entry-line-exit) will appear in the Results window.</p>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>705</width>
-    <height>721</height>
+    <width>729</width>
+    <height>733</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -41,7 +41,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="displayTab">
       <attribute name="title">
@@ -785,7 +785,7 @@
             <property name="sizeHint" stdset="0">
              <size>
               <width>20</width>
-              <height>40</height>
+              <height>20</height>
              </size>
             </property>
            </spacer>
@@ -1200,23 +1200,10 @@
           <string/>
          </property>
          <layout class="QGridLayout" name="gridLayout_12">
-          <item row="1" column="0">
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>212</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="0" column="0">
+          <item row="0" column="1">
            <widget class="QGroupBox" name="groupBox_10">
             <property name="title">
-             <string/>
+             <string>General</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_7">
              <item row="0" column="0">
@@ -1388,21 +1375,244 @@
             </layout>
            </widget>
           </item>
-          <item row="0" column="1">
-           <spacer name="horizontalSpacer">
+          <item row="1" column="1">
+           <widget class="QGroupBox" name="groupBox_16">
+            <property name="title">
+             <string>PON elements</string>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_17">
+             <item row="4" column="1">
+              <widget class="QSpinBox" name="numberOfLevel2Connectors">
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QDoubleSpinBox" name="splittersLevel2Loss">
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_51">
+               <property name="text">
+                <string>Splitters Level 1 loss</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="2">
+              <widget class="QLabel" name="label_59">
+               <property name="text">
+                <string>db</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_52">
+               <property name="text">
+                <string>Level 1 connectors</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_55">
+               <property name="text">
+                <string>Level 2 connectors</string>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <widget class="QSpinBox" name="numberOfLevel3Connectors">
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_53">
+               <property name="text">
+                <string>Splitters Level 2 loss</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QDoubleSpinBox" name="splittersLevel3Loss">
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="numberOfLevel1Connectors">
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="0">
+              <widget class="QLabel" name="label_56">
+               <property name="text">
+                <string>Level 3 connectors</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QLabel" name="label_58">
+               <property name="text">
+                <string>db</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="label_54">
+               <property name="text">
+                <string>Splitters Level 3 loss</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="label_57">
+               <property name="text">
+                <string>db</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QDoubleSpinBox" name="splittersLevel1Loss">
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="0">
+              <widget class="QLabel" name="label_61">
+               <property name="text">
+                <string>Splice boxes</string>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="1">
+              <widget class="QSpinBox" name="numberOfSpliceBoxes">
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QGroupBox" name="groupBox_18">
+            <property name="title">
+             <string>Profiles</string>
+            </property>
+            <widget class="QListWidget" name="profilesList">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>90</y>
+               <width>133</width>
+               <height>127</height>
+              </rect>
+             </property>
+             <property name="sortingEnabled">
+              <bool>false</bool>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="profileLoadButton">
+             <property name="geometry">
+              <rect>
+               <x>156</x>
+               <y>90</y>
+               <width>93</width>
+               <height>28</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Load</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="profileSaveButton">
+             <property name="geometry">
+              <rect>
+               <x>156</x>
+               <y>138</y>
+               <width>93</width>
+               <height>28</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Save</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="profileDeleteButton">
+             <property name="geometry">
+              <rect>
+               <x>156</x>
+               <y>186</y>
+               <width>93</width>
+               <height>28</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Delete</string>
+             </property>
+            </widget>
+            <widget class="QLineEdit" name="profileEntry">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>54</y>
+               <width>129</width>
+               <height>22</height>
+              </rect>
+             </property>
+            </widget>
+            <widget class="QLabel" name="label_60">
+             <property name="geometry">
+              <rect>
+               <x>8</x>
+               <y>28</y>
+               <width>113</width>
+               <height>16</height>
+              </rect>
+             </property>
+             <property name="text">
+              <string>Saved profiles</string>
+             </property>
+            </widget>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <spacer name="verticalSpacer">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>442</width>
-              <height>20</height>
+              <width>20</width>
+              <height>40</height>
              </size>
             </property>
            </spacer>
           </item>
          </layout>
         </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_6">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>

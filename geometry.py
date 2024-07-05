@@ -53,12 +53,16 @@ class OtFSP_Geometry:
         try:
             d = QgsDistanceArea()
             d.setSourceCrs(sourceCrs, QgsProject.instance().transformContext())
-            # I do not use d.setEllipsoid(sourceCrs.ellipsoidAcronym()) because setting the ellipsoid defines an ellipsoidal rather than 
-            # a cartesian distance measurement and sets the length unit to meters.           
+            # Defines an ellipsoidal rather than 
+            # a cartesian distance measurement and sets the length unit to meters. 
+            # Correction Github Issue #9            
+            d.setEllipsoid(sourceCrs.ellipsoidAcronym())         
             # After QGIS 3.30 
             # length = d.convertLengthMeasurement(length, QgsUnitTypes.DistanceUnit.DistanceMeters)  
             # Before QGIS 3.30 works also after 3.30. 
             length_meters = d.convertLengthMeasurement(length, QgsUnitTypes.DistanceMeters)
+            
+            #print ("lengthInMeters input:", length, " output:", length_meters)
             return  length_meters   
         except:
             return -1        
@@ -71,9 +75,9 @@ class OtFSP_Geometry:
             d = QgsDistanceArea()
             d.setSourceCrs(crs, QgsProject.instance().transformContext())
             d.setEllipsoid(crs.ellipsoidAcronym())              
-            return [d.ellipsoid(), d.sourceCrs().authid(), d.sourceCrs().description(), QgsUnitTypes.toString(d.lengthUnits())]    
+            return [d.ellipsoid(), d.sourceCrs().authid(), d.sourceCrs().description(), QgsUnitTypes.toString(d.lengthUnits()), d.lengthUnits()]    
         except:
-            return ["?", "?", "?", "?"]
+            return ["?", "?", "?", "?", "?"]
 
             
     def crsDistanceUnits(self, crs:QgsCoordinateReferenceSystem) -> str:

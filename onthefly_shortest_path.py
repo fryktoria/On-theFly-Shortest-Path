@@ -64,6 +64,7 @@ from .bridge import BridgeLayer
 from .bridgingPointTool import BridgingPointTool
 from .bridgingLineTool import BridgingLineTool
 import webbrowser # For local and online help
+import json # To load/save fiber loss profiles file
 
 # Compiled ui 
 #from .ui_Classes import DockWidgetDialog, ConfigurationDialog, ResultsDialog, ResultsNoFiberDialog, MarkerCoordinatesDialog, LayerSelectionDialog
@@ -97,6 +98,14 @@ class OnTheFlyShortestPath:
         "spliceFrequency" : 1.0, # Km
         "cableLoss" : 0.25,       # db/Km    
         "fixedLoss" : 0,  # db e.g. Acccount for splitters 1:2->4db, 1:4->7db, 1:8->11db, 1:16->15db, 1:32->19db, 1:64->23db
+        "splittersLevel1Loss" : 0,
+        "level1Connectors" : 0,
+        "splittersLevel2Loss" : 0,
+        "level2Connectors" :0,
+        "splittersLevel3Loss" : 0,
+        "level3Connectors" : 0,
+        "spliceBoxes" : 0,       
+        
         "coordinateFormatIndex" : 0, # ["x y", "y x", "x, y", "y, x"]
         "addResultLayer" : 0, # add the result rubberband path to map as a temporary layer
         "addMergedLayer": 0, # add the merged layer to map as a temporary layer
@@ -142,7 +151,7 @@ class OnTheFlyShortestPath:
         "flexjLineToolLineWidth" : 3,
         "flexjLineToolLineStyleIndex" : 2, # Qt::DashDotLine - 1     
         "flexjLineToolShowDistance" : 1,
-        "flexjLineToolSlopingDistance" : 0,
+        "flexjLineToolSlopingDistance" : 1,
         "flexjLineToolAngleCorrection" : 0, # Difference in angle implementation of the QgsAnnotationPointTextItem.setAngle(). Do not know if it is related to the OS or to QGIS versions
         "flexjLineToolShowTotalDistance" : 0,
         "flexjLineToolDistanceDecimalDigits" : 2,
@@ -232,10 +241,13 @@ class OnTheFlyShortestPath:
     pointLayerImagePath =  "//docs//icons//PointLayer.png"
     lineLayerImagePath =  "//docs//icons//LineLayer.png"
     unknownLayerImagePath = "//docs//icons//mIconDataDefine.png"
+    lossProfilesPath = "//profiles//loss_profiles.json"
     
     # failed test. Not used
     targetCursorPath = "//docs//icons//target.png"
 
+    # A list of dictionaries to hold fiber loss profiles
+    lossProfiles = []
   
     def __init__(self, iface):
 
@@ -492,6 +504,11 @@ class OnTheFlyShortestPath:
         self.configurationDlg.selectLayerCrs.toggled.connect(self.on_configurationDlg_selectCrsChange)
         self.configurationDlg.selectCustomCrs.toggled.connect(self.on_configurationDlg_selectCrsChange)
         self.configurationDlg.mQgsProjectionSelectionWidget.crsChanged.connect(self.on_configurationDlg_customCrsChange)
+
+        self.configurationDlg.profileLoadButton.clicked.connect(self.on_configurationDlg_profile_load_button)
+        self.configurationDlg.profileSaveButton.clicked.connect(self.on_configurationDlg_profile_save_button)
+        self.configurationDlg.profileDeleteButton.clicked.connect(self.on_configurationDlg_profile_delete_button)
+        self.configurationDlg.profilesList.doubleClicked.connect(self.on_configurationDlg_profile_select)
         
         self.markerCoordinatesDlg.closeButton.clicked.connect(self.on_markerCoordinatesDlg_closeButton)
         
@@ -575,7 +592,7 @@ class OnTheFlyShortestPath:
         conf = self.currentConfig
         factory = self.factoryDefaultSettings       
         # I need to cast the values to int or float.        
-        floats = ["topologyTolerance", "connectorLoss", "spliceLoss", "spliceFrequency", "cableLoss", "fixedLoss", "bridgingPointToolRadius", "bridgingLineToolRadius"]        
+        floats = ["topologyTolerance", "connectorLoss", "spliceLoss", "spliceFrequency", "cableLoss", "fixedLoss", "bridgingPointToolRadius", "bridgingLineToolRadius", "splittersLevel1Loss", "splittersLevel2Loss", "splittersLevel3Loss"]        
         for key in self.factoryDefaultSettings.keys(): 
             if key in floats:        
                 conf[key] = float(s.value(p + key, factory[key]))
@@ -638,7 +655,7 @@ class OnTheFlyShortestPath:
         dlg.ellipsoidUnits.setText(crsData[3])
        
         self.populateComboBox(dlg.toleranceUnits, self.distanceUnits, dict["toleranceUnitsIndex"])        
-                        
+
         dlg.connectorLoss.setValue(dict["connectorLoss"])
         dlg.numberOfConnectorsAtEntry.setValue(dict["numberOfConnectorsAtEntry"])
         dlg.numberOfConnectorsAtExit.setValue(dict["numberOfConnectorsAtExit"])
@@ -646,6 +663,22 @@ class OnTheFlyShortestPath:
         dlg.spliceFrequency.setValue(dict["spliceFrequency"])
         dlg.cableLoss.setValue(dict["cableLoss"]) 
         dlg.fixedLoss.setValue(dict["fixedLoss"])
+        dlg.splittersLevel1Loss.setValue(dict["splittersLevel1Loss"])
+        dlg.numberOfLevel1Connectors.setValue(dict["level1Connectors"])
+        dlg.splittersLevel2Loss.setValue(dict["splittersLevel2Loss"])
+        dlg.numberOfLevel2Connectors.setValue(dict["level2Connectors"])
+        dlg.splittersLevel3Loss.setValue(dict["splittersLevel3Loss"])
+        dlg.numberOfLevel3Connectors.setValue(dict["level3Connectors"])
+        dlg.numberOfSpliceBoxes.setValue(dict["spliceBoxes"]) 
+
+        
+        self.lossProfiles = self.loadLossProfiles()
+        if self.lossProfiles != None:       
+             # Populate the list widget
+            dlg.profilesList.clear()
+            for profile in self.lossProfiles:
+                dlg.profilesList.addItem(profile['name'])
+
  
         self.populateComboBox(dlg.coordinateFormat, self.coordinateFormats, dict["coordinateFormatIndex"])
         
@@ -761,6 +794,13 @@ class OnTheFlyShortestPath:
         conf["spliceFrequency"] = dlg.spliceFrequency.value()
         conf["cableLoss"] = dlg.cableLoss.value() 
         conf["fixedLoss"] = dlg.fixedLoss.value() 
+        conf["splittersLevel1Loss"] = dlg.splittersLevel1Loss.value()
+        conf["level1Connectors"] = dlg.numberOfLevel1Connectors.value() 
+        conf["splittersLevel2Loss"] = dlg.splittersLevel2Loss.value() 
+        conf["level2Connectors"] = dlg.numberOfLevel2Connectors.value() 
+        conf["splittersLevel3Loss"] = dlg.splittersLevel3Loss.value() 
+        conf["level3Connectors"] = dlg.numberOfLevel3Connectors.value() 
+        conf["spliceBoxes"] = dlg.numberOfSpliceBoxes.value() 
 
         conf["snappingToolSnappingProviderIndex"] = self.getComboBoxIndex(dlg.snappingToolSnappingProvider, self.snappingProviders)
         conf["snappingToolColorRed"] = dlg.snappingToolColor.color().red()
@@ -814,7 +854,8 @@ class OnTheFlyShortestPath:
         conf["entryExitLengthLimit"] = dlg.entryExitLengthLimit.value()
         
         # Store to QGIS settings repository
-        self.storeQgsSettings()
+        self.storeQgsSettings()      
+        
         return        
         
 
@@ -1687,6 +1728,7 @@ class OnTheFlyShortestPath:
         self.resultsDict["ellipsoid"] = crsData[0] 
         self.resultsDict["crs"] = crsData[1] + "/" + crsData[2] 
         self.resultsDict["lengthUnits"] = crsData[3]
+        codedLengthUnits = crsData[4]
 
         ''' We expect that the distance units returned by crsData[3] will be meters in order to make 
             our conversions. Most CRS and associated ellipsoids' units are in meters or can be converted by QGIS from 
@@ -1695,7 +1737,8 @@ class OnTheFlyShortestPath:
             From 1.2.1, we convert to meters and use meters for fiber loss calculations    
             
         '''
-        if self.resultsDict["lengthUnits"] == "meters":
+        #if self.resultsDict["lengthUnits"] == "meters":  #Correction Github Issue #9
+        if codedLengthUnits == QgsUnitTypes.DistanceMeters:
             conversionIndex = self.currentConfig["distanceUnitsIndex"]
             # From 1.0.4, we use the converted units
             self.resultsDict["lengthUnits"] = self.resultUnitsList[self.currentConfig["distanceUnitsIndex"]]
@@ -1711,7 +1754,7 @@ class OnTheFlyShortestPath:
             # Not really sure if necessary. Probably setting the ellipsoid in QgsGraphBuilder(currentCrs, True, topologyTolerance, currentCrs.ellipsoidAcronym())
             # defines an ellipsoidal measurement, which uses the metric system. QGIS documentation does not cover the issue.            
             conversionIndex = -1
-            self.iface.messageBar().pushMessage("Warning", "Base distance unit is not meters but " + crsData[3] +". Unit conversion is taking place", level=Qgis.Warning, duration=5)
+            self.iface.messageBar().pushMessage("Warning", "Base distance unit is not meters but " + crsData[3] +". Unit conversion is taking place", level=Qgis.Warning, duration=10)
             self.resultsDict["entryCostMeters"] = self.geom.lengthInMeters(entryCost, measureCrs)
             self.resultsDict["costOnGraphMeters"] = self.geom.lengthInMeters(costOnGraph, measureCrs)
             self.resultsDict["exitCostMeters"] = self.geom.lengthInMeters(exitCost, measureCrs)
@@ -1920,9 +1963,12 @@ class OnTheFlyShortestPath:
  
 
     def spliceLoss(self, length:float) -> float:
-        ''' Returns the splice loss of a length of fiber cable (in meters), given the configuration data '''      
-        spliceLoss = length / 1000.0 / self.currentConfig["spliceFrequency"] * self.currentConfig["spliceLoss"] if self.currentConfig["spliceFrequency"] != 0 else 0
-        return spliceLoss
+        ''' Returns the splice loss of a length of fiber cable (in meters), given the configuration data '''  
+        if self.currentConfig["spliceFrequency"] < 0.0000000001:
+            loss = 0
+        else:            
+            loss = length / 1000.0 / self.currentConfig["spliceFrequency"] * self.currentConfig["spliceLoss"]
+        return loss
         
     
     def formatLengthValue(self, length:float) -> str:
@@ -1944,9 +1990,16 @@ class OnTheFlyShortestPath:
             Adjustment is made with the division of length by 1000.0 because the cinfiguration parameters are in db/Km   '''
         d = self.resultsDict
         
+        #print (d)
+        
         conectorLossAtEntry = (self.currentConfig["connectorLoss"] * self.currentConfig["numberOfConnectorsAtEntry"])
         conectorLossAtExit = (self.currentConfig["connectorLoss"] * self.currentConfig["numberOfConnectorsAtExit"])
-             
+        gponLoss = self.currentConfig["splittersLevel1Loss"] \
+                   + self.currentConfig["splittersLevel2Loss"] \
+                   + self.currentConfig["splittersLevel3Loss"] \
+                   + (self.currentConfig["level1Connectors"] + self.currentConfig["level2Connectors"] + self.currentConfig["level3Connectors"]) * self.currentConfig["connectorLoss"] \
+                   + self.currentConfig["spliceBoxes"] * self.currentConfig["spliceLoss"]
+                   
         d["fiberLossEntry"] = conectorLossAtEntry \
                               + self.spliceLoss(d["entryCostMeters"]) \
                               + d["entryCostMeters"] /1000.0 * self.currentConfig["cableLoss"] 
@@ -1956,7 +2009,8 @@ class OnTheFlyShortestPath:
                              + d["exitCostMeters"] /1000.0 * self.currentConfig["cableLoss"] 
                                                         
         d["fiberLossOnGraph"] =  d["costOnGraphMeters"] / 1000.0 * self.currentConfig["cableLoss"] \
-                                 + self.spliceLoss(d["costOnGraphMeters"]) 
+                                 + self.spliceLoss(d["costOnGraphMeters"]) \
+                                 + gponLoss
         
         if self.dockDlg.addFixedLoss.isChecked():
             d["fiberLossOnGraph"]  += self.currentConfig["fixedLoss"]
@@ -2564,4 +2618,146 @@ class OnTheFlyShortestPath:
         msgBox.setDefaultButton(QMessageBox.Ok)
         reply = msgBox.exec_()
         
-        return reply                               
+        return reply      
+
+
+    def loadLossProfiles(self):
+
+        inputFile = "".join([self.plugin_dir, self.lossProfilesPath])
+        try:
+            with open(inputFile, 'r') as inFile:
+                profiles_object = json.load(inFile)   
+        except:
+            return None 
+            
+        return profiles_object
+        
+        
+    def saveLossProfiles(self, obj):
+
+        outputFile = "".join([self.plugin_dir, self.lossProfilesPath])
+        json_object = json.dumps(obj, indent=4)
+        try:
+            with open(outputFile, "w") as outfile:
+                outfile.write(json_object)
+        except:
+            return -1  
+            
+        return 0   
+        
+    def on_configurationDlg_profile_load_button(self):
+        dlg = self.configurationDlg
+        
+        currentRow = dlg.profilesList.currentRow()
+        if currentRow >= 0:
+        
+            profile = self.lossProfiles[currentRow]
+            
+            dlg.profileEntry.setText(profile["name"])
+    
+            # Set values of the selected profile
+            dlg.connectorLoss.setValue(profile["connectorLoss"])
+            dlg.numberOfConnectorsAtEntry.setValue(profile["connectorsAtEntry"])
+            dlg.numberOfConnectorsAtExit.setValue(profile["connectorsAtExit"])
+            dlg.spliceLoss.setValue(profile["spliceLoss"])
+            dlg.spliceFrequency.setValue(profile["spliceFrequency"])
+            dlg.cableLoss.setValue(profile["fiberAttenuation"]) 
+            dlg.fixedLoss.setValue(profile["fixedLoss"])
+            dlg.splittersLevel1Loss.setValue(profile["splittersLevel1Loss"])
+            dlg.numberOfLevel1Connectors.setValue(profile["level1Connectors"])
+            dlg.splittersLevel2Loss.setValue(profile["splittersLevel2Loss"])
+            dlg.numberOfLevel2Connectors.setValue(profile["level2Connectors"])
+            dlg.splittersLevel3Loss.setValue(profile["splittersLevel3Loss"])
+            dlg.numberOfLevel3Connectors.setValue(profile["level3Connectors"])
+            dlg.numberOfSpliceBoxes.setValue(profile["spliceBoxes"])
+                        
+        return
+
+
+    def on_configurationDlg_profile_save_button(self):
+    
+        dlg = self.configurationDlg
+        # If the name exists, update. If the name does not exist, add a new dictionary to the list
+        entry = self.configurationDlg.profileEntry.text()
+        entry = entry.strip()
+        if entry == "" or self.configurationDlg.profilesList.count() <= 0 :
+            return
+        profile_id = -1
+        max_profile_id = 0
+        for currentRow, profile in enumerate(self.lossProfiles):
+            max_profile_id = max (max_profile_id, profile["id"])
+            if profile["name"] == entry:
+                message = "Profile '"+ self.lossProfiles[currentRow]['name'] + "' will be overwritten with the current values. Continue?"
+                if self.askUser(message) != QMessageBox.Ok:
+                    return
+                profile_id = profile["id"]
+                # Update
+                profile["connectorLoss"] = dlg.connectorLoss.value()
+                profile["connectorsAtEntry"] = dlg.numberOfConnectorsAtEntry.value()
+                profile["connectorsAtExit"] = dlg.numberOfConnectorsAtExit.value()
+                profile["spliceLoss"] = dlg.spliceLoss.value()
+                profile["spliceFrequency"] = dlg.spliceFrequency.value()
+                profile["fiberAttenuation"] = dlg.cableLoss.value() 
+                profile["fixedLoss"] = dlg.fixedLoss.value()
+                profile["splittersLevel1Loss"] = dlg.splittersLevel1Loss.value()
+                profile["level1Connectors"] = dlg.numberOfLevel1Connectors.value()
+                profile["splittersLevel2Loss"] = dlg.splittersLevel2Loss.value()
+                profile["level2Connectors"] = dlg.numberOfLevel2Connectors.value()
+                profile["splittersLevel3Loss"] = dlg.splittersLevel3Loss.value()
+                profile["level3Connectors"] = dlg.numberOfLevel3Connectors.value()
+                profile["spliceBoxes"] = dlg.numberOfSpliceBoxes.value()
+                
+        if profile_id < 0:
+            # Add new
+            profile = {}
+            profile["id"] = max_profile_id + 1
+            profile_id = profile["id"]
+            profile["name"] = entry
+            profile["connectorLoss"] = dlg.connectorLoss.value()
+            profile["connectorsAtEntry"] = dlg.numberOfConnectorsAtEntry.value()
+            profile["connectorsAtExit"] = dlg.numberOfConnectorsAtExit.value()
+            profile["spliceLoss"] = dlg.spliceLoss.value()
+            profile["spliceFrequency"] = dlg.spliceFrequency.value()
+            profile["fiberAttenuation"] = dlg.cableLoss.value() 
+            profile["fixedLoss"] = dlg.fixedLoss.value()
+            profile["splittersLevel1Loss"] = dlg.splittersLevel1Loss.value()
+            profile["level1Connectors"] = dlg.numberOfLevel1Connectors.value()
+            profile["splittersLevel2Loss"] = dlg.splittersLevel2Loss.value()
+            profile["level2Connectors"] = dlg.numberOfLevel2Connectors.value()
+            profile["splittersLevel3Loss"] = dlg.splittersLevel3Loss.value()
+            profile["level3Connectors"] = dlg.numberOfLevel3Connectors.value() 
+            profile["spliceBoxes"] = dlg.numberOfSpliceBoxes.value()
+            
+            self.lossProfiles.append(profile)
+            self.configurationDlg.profilesList.addItem(entry)
+            
+        self.saveLossProfiles(self.lossProfiles)
+            
+        return
+
+
+    def on_configurationDlg_profile_delete_button(self):
+    
+        dlg = self.configurationDlg
+        currentRow = dlg.profilesList.currentRow()
+        message = "Profile '"+ self.lossProfiles[currentRow]['name'] + "' be deleted. Continue?"
+        # Do not allow deleting the default, so >0 instead of >=0
+        if currentRow > 0:
+            if self.askUser(message) != QMessageBox.Ok:
+                return
+            self.lossProfiles.pop(currentRow)
+            dlg.profilesList.takeItem(currentRow)
+            self.saveLossProfiles(self.lossProfiles)   
+            
+        return    
+        
+        
+    def on_configurationDlg_profile_select(self):
+    
+        dlg = self.configurationDlg       
+        currentRow = dlg.profilesList.currentRow()     
+        profile = self.lossProfiles[currentRow]           
+        dlg.profileEntry.setText(profile["name"])
+        
+        return
+    
